@@ -16,6 +16,7 @@ int alarmValue[8] = {0};
 int boundery = 0;
 int alarmSet= 0;
 
+
 BlynkTimer timer;
 
 void loop()
@@ -39,9 +40,11 @@ void setup() {
   Blynk.begin(auth, ssid, pass);
   Serial.print("Blynk Connected");
 
-  // Setup a function to be called every second
+  // Setup a function to be called every two seconds
   timer.setInterval(2000L, timeLoop);
 }
+
+
 void timeLoop(){
   updateValues();
 }
@@ -86,7 +89,7 @@ void updateMux1 () {
 }
 
 
-#This will sample the power 10,000 time and ignore any 0's and set out the avrage.
+//This will sample the power 10,000 time and ignore any 0's and set out the avrage.
 void updateValues(){
  int x=0;
  int y=0;
@@ -107,7 +110,7 @@ void updateValues(){
   }
 }
 
-#test for for mux 
+//test for for mux 
 void updateValues2(){
   updateMux1();
   //Alarm is set
