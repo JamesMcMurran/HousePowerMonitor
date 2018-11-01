@@ -1,4 +1,5 @@
 #include <ESP8266WiFi.h>
+#include <ArduinoOTA.h>
 #include <BlynkSimpleEsp8266.h>
 
 const int selectPins[3] = {5, 4, 15};
@@ -28,6 +29,10 @@ void loop()
 
 void setup() {
   
+  ArduinoOTA.onError([](ota_error_t error) { ESP.restart(); });
+  ArduinoOTA.setHostname("PowerMonitor");
+  ArduinoOTA.begin();
+  
   //mux setup
   pinMode(pin_Out_S0, OUTPUT);
   pinMode(pin_Out_S1, OUTPUT);
@@ -40,7 +45,7 @@ void setup() {
   Blynk.begin(auth, ssid, pass);
   Serial.print("Blynk Connected");
 
-  // Setup a function to be called every two seconds
+  // Setup a function to be called every second
   timer.setInterval(2000L, timeLoop);
 }
 
@@ -88,29 +93,34 @@ void updateMux1 () {
   }
 }
 
-
-//This will sample the power 10,000 time and ignore any 0's and set out the avrage.
 void updateValues(){
- int x=0;
  int y=0;
  int c=0;
+ int avgValue=0;
+ int maxValue=0;
   for (int i = 0; i < 10000; i++){
     y = analogRead(pin_In_Mux1);
+    if(y > maxValue){
+      maxValue = y;
+    }
     if(y != 0){
-      x +=y;
+      avgValue +=y;
       c++;
     }
   }
-  if(x!=0){
-    Blynk.virtualWrite(0, x/c);
-    Serial.println(x/c); 
+  if(avgValue!=0){
+    Blynk.virtualWrite(0, avgValue/c);
+    Serial.println(avgValue/c); 
   }else{
     Blynk.virtualWrite(0, 0);
     Serial.println(0);
   }
+  
+    Blynk.virtualWrite(22, maxValue);
+    Serial.println(0);
 }
 
-//test for for mux 
+
 void updateValues2(){
   updateMux1();
   //Alarm is set
