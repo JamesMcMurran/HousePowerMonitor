@@ -8,7 +8,7 @@ char pass[] = "";
 
 
 int right_phase = A0;
-int left_phase = A1;
+int left_phase = A0;
 
 BlynkTimer timer;
 
@@ -26,6 +26,7 @@ void setup() {
   ArduinoOTA.begin();
 
   pinMode(right_phase, INPUT);
+  pinMode(left_phase, INPUT);
 
   // Debug console
   Serial.begin(9600);
