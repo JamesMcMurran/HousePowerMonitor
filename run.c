@@ -1,53 +1,26 @@
-#include <ESP8266WiFi.h>
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <BlynkSimpleEsp32.h>
+#include <Arduino.h>
 #include <ArduinoOTA.h>
-#include <BlynkSimpleEsp8266.h>
 
 char auth[] = "";
 char ssid[] = "";
 char pass[] = "";
 
 
+
 int right_phase = A0;
-int left_phase = A0;
+int left_phase = A3;
 
 BlynkTimer timer;
-
-void loop()
-{
-  timer.run(); // Initiates BlynkTimer
-  Blynk.run();
-
-}
-
-void setup() {
-
-  ArduinoOTA.onError([](ota_error_t error) { ESP.restart(); });
-  ArduinoOTA.setHostname("PowerMonitor");
-  ArduinoOTA.begin();
-
-  pinMode(right_phase, INPUT);
-  pinMode(left_phase, INPUT);
-
-  // Debug console
-  Serial.begin(9600);
-  Serial.print("Blynk Connecting");
-  Blynk.begin(auth, ssid, pass);
-  Serial.print("Blynk Connected");
-
-  // Setup a function to be called every second
-  timer.setInterval(2500L, timeLoop);
-}
-
-void timeLoop(){
-  updateValues();
-}
 
 BLYNK_CONNECTED() {
     Blynk.syncAll();
 }
 
 void updateValues(){
-  
+
   int cr=0;
   int cl=0;
   int left_temp=0;
@@ -56,7 +29,7 @@ void updateValues(){
   int right_avg_value=0;
   int max_value_left=0;
   int max_value_right=0;
-  
+
   for (int i = 0; i < 5000; i++){
 
     left_temp = analogRead(right_phase);
@@ -81,7 +54,7 @@ void updateValues(){
     }
 
   }
-  
+
   //Serial.print("avg_value ");
   if(left_avg_value!=0){
     Blynk.virtualWrite(1, left_avg_value/cl);
@@ -90,7 +63,7 @@ void updateValues(){
     Blynk.virtualWrite(1, 0);
     //Serial.println(0);
   }
-  
+
   //Serial.print("avg_value ");
   if(right_avg_value!=0){
     Blynk.virtualWrite(0, right_avg_value/cr);
@@ -107,9 +80,41 @@ void updateValues(){
   float div_max_right = max_value_right / 20.00;
   Blynk.virtualWrite(23, div_max_left);
   Blynk.virtualWrite(24, div_max_right);
-  
+
   //Serial.print("max value right ");
   //Serial.println(max_value_right);
   //Serial.print("max_value_right  / 20. ");
   //Serial.println(divMax);
+}
+
+void timeLoop(){
+  updateValues();
+}
+
+
+void setup() {
+
+  ArduinoOTA.onError([](ota_error_t error) { ESP.restart(); });
+  ArduinoOTA.setHostname("PowerMonitor");
+  ArduinoOTA.begin();
+
+  pinMode(right_phase, INPUT);
+  pinMode(left_phase, INPUT);
+
+  // Debug console
+  Serial.begin(9600);
+  Serial.print("Blynk Connecting");
+  Blynk.begin(auth, ssid, pass);
+  Serial.print("Blynk Connected");
+
+  // Setup a function to be called every second
+  timer.setInterval(2500L, timeLoop);
+}
+
+
+void loop()
+{
+  timer.run(); // Initiates BlynkTimer
+  Blynk.run();
+
 }
