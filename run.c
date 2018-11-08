@@ -9,9 +9,8 @@ char ssid[] = "";
 char pass[] = "";
 
 
-
-int right_phase = A0;
-int left_phase = A3;
+#define right_phase 36
+#define left_phase 35
 
 BlynkTimer timer;
 
@@ -19,6 +18,20 @@ BLYNK_CONNECTED() {
     Blynk.syncAll();
 }
 
+/**
+*This is used to disregard the first reading as they have a bleed over from the prior reading.
+* pin - This is the pin you would like to prep for reading.
+**/
+void throw_away(int pin){
+  for (int i = 0; i < 700; i++){
+    analogRead(pin);
+    delay(1);
+  }
+}
+
+/*
+*This is used to check and update the values
+*/
 void updateValues(){
 
   int cr=0;
@@ -30,22 +43,30 @@ void updateValues(){
   int max_value_left=0;
   int max_value_right=0;
 
-  for (int i = 0; i < 5000; i++){
 
-    left_temp = analogRead(right_phase);
-    right_temp = analogRead(right_phase);
+  throw_away(left_phase);
+  for (int i = 0; i < 15000; i++){
+
+    left_temp = analogRead(left_phase);
 
     if(left_temp > max_value_left){
       max_value_left = left_temp;
     }
 
-    if(right_temp > max_value_right){
-      max_value_right = right_temp;
-    }
-
     if(left_temp != 0){
       left_avg_value += left_temp;
       cl++;
+    }
+
+  }
+
+  throw_away(right_phase);
+  for (int i = 0; i < 15000; i++){
+
+    right_temp = analogRead(right_phase);
+
+    if(right_temp > max_value_right){
+      max_value_right = right_temp;
     }
 
     if(right_temp != 0){
@@ -55,22 +76,36 @@ void updateValues(){
 
   }
 
-  //Serial.print("avg_value ");
-  if(left_avg_value!=0){
-    Blynk.virtualWrite(1, left_avg_value/cl);
-    //Serial.println(avg_value/cl);
-  }else{
-    Blynk.virtualWrite(1, 0);
-    //Serial.println(0);
+  //prevent divide by 0
+  if(cl==0){
+    cl=1;
   }
 
-  //Serial.print("avg_value ");
+  if(cr==0){
+    cr=1;
+  }
+
+  Serial.print("Left Temp ");
+  Serial.print(left_temp);
+  Serial.print(" Left Max ");
+  Serial.print(max_value_left);
+  Serial.print(" Left AVG ");
+  Serial.print(left_avg_value /cl);
+
+  Serial.print(" Right Temp ");
+  Serial.print(right_temp);
+  Serial.print(" Right Max ");
+  Serial.print(max_value_right);
+  Serial.print(" Right AVG ");
+  Serial.print(right_avg_value / cr);
+  Serial.println(" ");
+
+  if(left_avg_value!=0){
+    Blynk.virtualWrite(1, left_avg_value/cl);
+  }
+
   if(right_avg_value!=0){
     Blynk.virtualWrite(0, right_avg_value/cr);
-    //Serial.println(avg_value/cr);
-  }else{
-    Blynk.virtualWrite(0, 0);
-    //Serial.println(0);
   }
 
   Blynk.virtualWrite(21, max_value_left);
@@ -80,11 +115,6 @@ void updateValues(){
   float div_max_right = max_value_right / 20.00;
   Blynk.virtualWrite(23, div_max_left);
   Blynk.virtualWrite(24, div_max_right);
-
-  //Serial.print("max value right ");
-  //Serial.println(max_value_right);
-  //Serial.print("max_value_right  / 20. ");
-  //Serial.println(divMax);
 }
 
 void timeLoop(){
@@ -102,13 +132,13 @@ void setup() {
   pinMode(left_phase, INPUT);
 
   // Debug console
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.print("Blynk Connecting");
   Blynk.begin(auth, ssid, pass);
   Serial.print("Blynk Connected");
 
   // Setup a function to be called every second
-  timer.setInterval(2500L, timeLoop);
+  timer.setInterval(1000L, timeLoop);
 }
 
 
